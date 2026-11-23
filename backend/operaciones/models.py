@@ -9,6 +9,7 @@ class SedeRed(models.Model):
 
     class EstadoEnlace(models.TextChoices):
         OPERATIVO = 'OPERATIVO', 'Conectado'
+        FALLA = 'FALLA', 'Falla de Conexión'  # <-- NUEVA OPCIÓN
         FAILOVER = 'FAILOVER', 'Respaldo Activo'
         EN_DESPLIEGUE = 'EN_DESPLIEGUE', 'En Implementación'
 
@@ -55,3 +56,13 @@ class TicketFalla(models.Model):
     estado = models.CharField(max_length=20, choices=EstadoTicket.choices, default=EstadoTicket.PENDIENTE)
     respuesta_soporte = models.TextField(blank=True, default='')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+class HistorialCambio(models.Model):
+    sede = models.ForeignKey(SedeRed, on_delete=models.CASCADE, null=True, blank=True)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    accion = models.CharField(max_length=200) # Ej: "Cambió estado de conexión"
+    detalle = models.TextField()             # Ej: "De Conectado a Falla de Conexión"
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha']

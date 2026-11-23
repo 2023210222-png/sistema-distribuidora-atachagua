@@ -65,13 +65,17 @@ import { AuthService } from '../../core/auth.service';
               <div class="row g-3 align-items-end">
                 <div class="col-md-6">
                   <label class="form-label small fw-semibold">Material</label>
-                  <select class="form-select form-select-sm" [(ngModel)]="movimientoForm.stock_id">
-                    @for (prod of sedeSeleccionada.inventario; track prod.id) {
-                      <option [value]="prod.id">
-                        {{ prod.producto }} (Disponible: {{ prod.cantidad }} {{ prod.unidad_medida }})
-                      </option>
-                    }
-                  </select>
+                  <select class="form-select form-select-sm mb-2 fw-semibold" [ngModel]="sedeSeleccionada.estado" (ngModelChange)="cambiarEstadoSede($event)">
+                    <option value="OPERATIVO">Conectado (Operativo)</option>
+                    <option value="FALLA">Falla de Conexión (Sin Internet)</option>
+  
+                  <!-- SOLO LA SEDE S01 (Amarilis Central) TIENE FAILOVER -->
+                 @if (sedeSeleccionada.codigo === 'S01' || sedeSeleccionada.nombre.includes('Central')) {
+                    <option value="FAILOVER">Respaldo Activo (Failover OSPFv3)</option>
+                  }
+  
+                  <option value="EN_DESPLIEGUE">En Despliegue (Pendiente)</option>
+                </select>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label small fw-semibold">Cantidad</label>
@@ -129,27 +133,35 @@ import { AuthService } from '../../core/auth.service';
                 </div>
               </div>
               <div class="col-md-4">
-                <div class="border rounded-3 p-3 h-100 bg-light">
-                  <div class="text-muted small fw-semibold mb-1">Estado de Conexión WAN</div>
-                  @if (user?.rol === 'ADMIN') {
-                    <select class="form-select form-select-sm mb-2 fw-semibold" [ngModel]="sedeSeleccionada.estado" (ngModelChange)="cambiarEstadoSede($event)">
-                      <option value="OPERATIVO">Conectado (Operativo)</option>
-                      <option value="FAILOVER">Respaldo Activo (Failover OSPFv3)</option>
-                      <option value="EN_DESPLIEGUE">En Despliegue (Pendiente)</option>
-                    </select>
-                  } @else {
-                    <span class="badge rounded-pill px-3 py-2"
-                      [ngClass]="{
-                        'bg-success': sedeSeleccionada.estado === 'OPERATIVO',
-                        'bg-warning text-dark': sedeSeleccionada.estado === 'FAILOVER',
-                        'bg-secondary': sedeSeleccionada.estado === 'EN_DESPLIEGUE'
-                      }">
-                      {{ sedeSeleccionada.estado === 'OPERATIVO' ? 'CONECTADO' : (sedeSeleccionada.estado === 'FAILOVER' ? 'RESPALDO ACTIVO' : 'EN DESPLIEGUE') }}
-                    </span>
-                  }
-                  <div class="small text-muted mt-1">Encargado: <strong>{{ sedeSeleccionada.responsable_nombre }}</strong></div>
-                </div>
-              </div>
+  <div class="border rounded-3 p-3 h-100 bg-light">
+    <div class="text-muted small fw-semibold mb-1">Estado de Conexión WAN</div>
+    @if (user?.rol === 'ADMIN') {
+      <select class="form-select form-select-sm mb-2 fw-semibold" [ngModel]="sedeSeleccionada.estado" (ngModelChange)="cambiarEstadoSede($event)">
+        <option value="OPERATIVO">Conectado (Operativo)</option>
+        <option value="FALLA">Falla de Conexión (Sin Internet)</option>
+        @if (sedeSeleccionada.codigo === 'S01' || sedeSeleccionada.nombre.includes('Central')) {
+          <option value="FAILOVER">Respaldo Activo (Failover OSPFv3)</option>
+        }
+        <option value="EN_DESPLIEGUE">En Despliegue (Pendiente)</option>
+      </select>
+    } @else {
+      <span class="badge rounded-pill px-3 py-2"
+        [ngClass]="{
+          'bg-success': sedeSeleccionada.estado === 'OPERATIVO',
+          'bg-danger': sedeSeleccionada.estado === 'FALLA',
+          'bg-warning text-dark': sedeSeleccionada.estado === 'FAILOVER',
+          'bg-secondary': sedeSeleccionada.estado === 'EN_DESPLIEGUE'
+        }">
+        {{ 
+          sedeSeleccionada.estado === 'OPERATIVO' ? 'CONECTADO' : 
+          (sedeSeleccionada.estado === 'FALLA' ? 'FALLA DE CONEXIÓN' : 
+          (sedeSeleccionada.estado === 'FAILOVER' ? 'RESPALDO ACTIVO' : 'EN DESPLIEGUE')) 
+        }}
+      </span>
+    }
+    <div class="small text-muted mt-1">Encargado: <strong>{{ sedeSeleccionada.responsable_nombre }}</strong></div>
+  </div>
+</div>
               <div class="col-md-5">
                 <div class="border rounded-3 p-3 h-100 bg-light">
                   <div class="text-muted small fw-semibold mb-1">Equipamiento en Local</div>
